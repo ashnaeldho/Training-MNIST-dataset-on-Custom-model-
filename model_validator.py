@@ -26,7 +26,16 @@ class TestModel(nn.Module):
         return x
 
 def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # Print detailed layer information
+    print("\nModel structure and parameters:")
+    print("--------------------------------")
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"{name}: {param.numel():,} parameters")
+    print("--------------------------------")
+    print(f"Total trainable parameters: {total_params:,}\n")
+    return total_params
 
 def check_batch_norm(model):
     return any(isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) 
@@ -61,9 +70,7 @@ def validate_model():
             
         # Load the model
         try:
-            # Create a new model instance
             model = TestModel()
-            # Load the state dict
             state_dict = torch.load(model_path, map_location=torch.device('cpu'))
             model.load_state_dict(state_dict)
         except Exception as load_error:
@@ -73,10 +80,10 @@ def validate_model():
         # Check total parameters
         param_count = count_parameters(model)
         if param_count > 20000:
-            print_github_output(f"Model has {param_count} parameters, which exceeds the limit of 20,000", True)
+            print_github_output(f"Model has {param_count:,} parameters, which exceeds the limit of 20,000", True)
             return False
         else:
-            print_github_output(f"Model has {param_count} parameters")
+            print_github_output(f"Model has {param_count:,} parameters")
 
         # Check batch normalization
         if not check_batch_norm(model):
