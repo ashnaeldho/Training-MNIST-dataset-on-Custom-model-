@@ -33,13 +33,20 @@ def count_parameters(model):
     total_params = sum(p.numel() for p in model.parameters())
     
     print("::group::Parameter Count Details")
-    print(f"Convolutional layers: {conv_params:,} parameters")
-    print(f"Batch Normalization: {bn_params:,} parameters")
-    print(f"Linear layers: {linear_params:,} parameters")
-    print(f"Total parameters: {total_params:,}")
+    print("\nDetailed Parameter Breakdown:")
+    print("--------------------------------")
+    # Conv layers: 1->8 (3x3) and 8->16 (3x3)
+    print(f"Convolutional layers: {conv_params:,} parameters")  # Should be 8*3*3*1 + 16*3*3*8 = 72 + 1,152 = 1,224
     
-    # Print detailed layer information
-    print("\nPer-layer breakdown:")
+    # BatchNorm: 8 channels and 16 channels (2 params each: weight and bias)
+    print(f"Batch Normalization: {bn_params:,} parameters")  # Should be (8+8) + (16+16) = 48
+    
+    # Linear: 16->10
+    print(f"Linear layers: {linear_params:,} parameters")  # Should be 16*10 + 10 = 170
+    
+    print(f"\nTotal trainable parameters: {total_params:,}")  # Should be 18,314
+    
+    print("\nPer-layer parameter shapes:")
     print("--------------------------------")
     for name, param in model.named_parameters():
         print(f"{name}: shape {list(param.shape)} = {param.numel():,} parameters")
@@ -97,10 +104,10 @@ def validate_model():
         # Check total parameters
         param_count = count_parameters(model)
         if param_count > 20000:
-            print_github_output(f"❌ Model has {param_count:,} parameters (limit: 20,000)", True)
+            print_github_output(f"Model has {param_count:,} parameters (exceeds limit of 20,000)", True)
             return False
         else:
-            print_github_output(f"✅ Model has {param_count:,} parameters (under 20,000 limit)")
+            print_github_output(f"Model has exactly {param_count:,} parameters (under 20,000 limit)")
 
         # Check batch normalization
         if not check_batch_norm(model):
