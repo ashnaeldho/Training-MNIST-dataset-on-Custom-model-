@@ -26,29 +26,36 @@ class TestModel(nn.Module):
         return x
 
 def count_parameters(model):
-    total_params = sum(p.numel() for p in model.parameters())
+    # Count only trainable parameters
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     
     print("::group::Parameter Count Details")
     print("\nDetailed Parameter Breakdown:")
     print("--------------------------------")
     
-    # Print every layer's parameters
+    # Print every layer's parameters with more detail
     for name, module in model.named_modules():
         if isinstance(module, (nn.Conv2d, nn.Linear, nn.BatchNorm2d)):
-            params = sum(p.numel() for p in module.parameters())
-            print(f"{name}: {type(module).__name__}: {params:,} parameters")
+            trainable = sum(p.numel() for p in module.parameters() if p.requires_grad)
+            total = sum(p.numel() for p in module.parameters())
+            print(f"{name}: {type(module).__name__}: {trainable:,} trainable parameters")
             
             # Print detailed parameter shapes for this module
             for param_name, param in module.named_parameters():
-                print(f"  └─ {param_name}: shape {list(param.shape)} = {param.numel():,} parameters")
+                trainable_str = "trainable" if param.requires_grad else "non-trainable"
+                print(f"  └─ {param_name}: shape {list(param.shape)} = {param.numel():,} parameters ({trainable_str})")
     
     print("\nTotal Parameter Count:")
     print("--------------------------------")
-    print(f"Total trainable parameters: {total_params:,}")  # Should be 18,314
+    print(f"Total trainable parameters: {trainable_params:,}")  # Should be 18,314
+    
+    # Also show total parameters including non-trainable
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total parameters (including non-trainable): {total_params:,}")
     print("--------------------------------")
     print("::endgroup::")
     
-    return total_params
+    return trainable_params
 
 def check_batch_norm(model):
     return any(isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) 
@@ -98,11 +105,14 @@ def validate_model():
 
         # Check total parameters
         param_count = count_parameters(model)
+        if param_count != 18314:  # Add explicit check for expected count
+            print_github_output(f"Warning: Expected 18,314 parameters but found {param_count:,}", True)
+            
         if param_count > 20000:
             print_github_output(f"Model has {param_count:,} parameters (exceeds limit of 20,000)", True)
             return False
         else:
-            print_github_output(f"Model has {param_count:,} parameters (under 20,000 limit)")
+            print_github_output(f"Model has exactly {param_count:,} parameters (under 20,000 limit)")
 
         # Check batch normalization
         if not check_batch_norm(model):
