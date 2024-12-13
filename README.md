@@ -22,4 +22,4 @@ This repository contains a custom made convolutional neural network trained on M
 | 19    | 98.42             | 99.5          | 0.0501        | 0.0157    | 99.56         |
 
 Training logs:
-![Training Progress Screenshot](images/Final_accuracy.jpg)
+![Training Progress Screenshot](Final_accuracy.jpg)
