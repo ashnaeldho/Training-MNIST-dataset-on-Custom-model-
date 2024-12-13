@@ -25,4 +25,5 @@ class TestModel(nn.Module):
 
 # Create and save the model
 model = TestModel()
-torch.save(model, 'best_model.pth') 
+# Save only the model state dict
+torch.save(model.state_dict(), 'best_model.pth') 

@@ -3,6 +3,28 @@ import torch.nn as nn
 import sys
 import os
 
+# Define the same model class here for loading
+class TestModel(nn.Module):
+    def __init__(self):
+        super(TestModel, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 8, kernel_size=3, padding=1),
+            nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.Conv2d(8, 16, kernel_size=3, padding=1),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Dropout(0.25),
+            nn.AdaptiveAvgPool2d(1)
+        )
+        self.classifier = nn.Linear(16, 10)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
@@ -39,20 +61,15 @@ def validate_model():
             
         # Load the model
         try:
-            # First try loading with weights_only=False to preserve the model architecture
-            model = torch.load(model_path, map_location=torch.device('cpu'))
-            if not isinstance(model, nn.Module):
-                # If that fails, try with weights_only=True
-                model = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
+            # Create a new model instance
+            model = TestModel()
+            # Load the state dict
+            state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+            model.load_state_dict(state_dict)
         except Exception as load_error:
             print_github_output(f"Failed to load model: {str(load_error)}", True)
             return False
-        
-        # Check if model is actually a neural network
-        if not isinstance(model, nn.Module):
-            print_github_output("Loaded file is not a PyTorch model", True)
-            return False
-        
+
         # Check total parameters
         param_count = count_parameters(model)
         if param_count > 20000:
