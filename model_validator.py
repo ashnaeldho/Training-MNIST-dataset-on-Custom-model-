@@ -37,9 +37,13 @@ def validate_model():
                 print(f"  - {file}")
             return False
             
-        # Load the model with weights_only=True for security
+        # Load the model
         try:
-            model = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
+            # First try loading with weights_only=False to preserve the model architecture
+            model = torch.load(model_path, map_location=torch.device('cpu'))
+            if not isinstance(model, nn.Module):
+                # If that fails, try with weights_only=True
+                model = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
         except Exception as load_error:
             print_github_output(f"Failed to load model: {str(load_error)}", True)
             return False
