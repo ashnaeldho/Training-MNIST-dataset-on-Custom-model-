@@ -26,30 +26,25 @@ class TestModel(nn.Module):
         return x
 
 def count_parameters(model):
-    # Count parameters per layer type
-    conv_params = sum(p.numel() for name, p in model.named_parameters() if 'conv' in name.lower())
-    bn_params = sum(p.numel() for name, p in model.named_parameters() if 'bn' in name.lower() or 'batch' in name.lower())
-    linear_params = sum(p.numel() for name, p in model.named_parameters() if 'linear' in name.lower() or 'classifier' in name.lower())
     total_params = sum(p.numel() for p in model.parameters())
     
     print("::group::Parameter Count Details")
     print("\nDetailed Parameter Breakdown:")
     print("--------------------------------")
-    # Conv layers: 1->8 (3x3) and 8->16 (3x3)
-    print(f"Convolutional layers: {conv_params:,} parameters")  # Should be 8*3*3*1 + 16*3*3*8 = 72 + 1,152 = 1,224
     
-    # BatchNorm: 8 channels and 16 channels (2 params each: weight and bias)
-    print(f"Batch Normalization: {bn_params:,} parameters")  # Should be (8+8) + (16+16) = 48
+    # Print every layer's parameters
+    for name, module in model.named_modules():
+        if isinstance(module, (nn.Conv2d, nn.Linear, nn.BatchNorm2d)):
+            params = sum(p.numel() for p in module.parameters())
+            print(f"{name}: {type(module).__name__}: {params:,} parameters")
+            
+            # Print detailed parameter shapes for this module
+            for param_name, param in module.named_parameters():
+                print(f"  └─ {param_name}: shape {list(param.shape)} = {param.numel():,} parameters")
     
-    # Linear: 16->10
-    print(f"Linear layers: {linear_params:,} parameters")  # Should be 16*10 + 10 = 170
-    
-    print(f"\nTotal trainable parameters: {total_params:,}")  # Should be 18,314
-    
-    print("\nPer-layer parameter shapes:")
+    print("\nTotal Parameter Count:")
     print("--------------------------------")
-    for name, param in model.named_parameters():
-        print(f"{name}: shape {list(param.shape)} = {param.numel():,} parameters")
+    print(f"Total trainable parameters: {total_params:,}")  # Should be 18,314
     print("--------------------------------")
     print("::endgroup::")
     
@@ -107,7 +102,7 @@ def validate_model():
             print_github_output(f"Model has {param_count:,} parameters (exceeds limit of 20,000)", True)
             return False
         else:
-            print_github_output(f"Model has exactly {param_count:,} parameters (under 20,000 limit)")
+            print_github_output(f"Model has {param_count:,} parameters (under 20,000 limit)")
 
         # Check batch normalization
         if not check_batch_norm(model):
