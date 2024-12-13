@@ -23,11 +23,11 @@ class TestModel(nn.Module):
         
         self.conv5 = nn.Conv2d(32, 16, kernel_size=1)
         self.bn5 = nn.BatchNorm2d(16)
-        self.conv6 = nn.Conv2d(16, 32, kernel_size=3)
-        self.bn6 = nn.BatchNorm2d(32)
+        self.conv6 = nn.Conv2d(16, 16, kernel_size=3)
+        self.bn6 = nn.BatchNorm2d(16)
         self.dropout3 = nn.Dropout(0.25)
         
-        self.conv7 = nn.Conv2d(32, 10, kernel_size=3)
+        self.conv7 = nn.Conv2d(16, 10, kernel_size=3)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
 
     def forward(self, x):
