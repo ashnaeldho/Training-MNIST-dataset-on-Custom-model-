@@ -27,13 +27,27 @@ def print_github_output(message, is_error=False):
 def validate_model():
     print("::group::Model Validation Results")
     try:
+        model_path = 'best_model.pth'
+        
         # Check if model file exists
-        if not os.path.exists('best_model.pth'):
-            print_github_output("Model file 'best_model.pth' not found", True)
+        if not os.path.exists(model_path):
+            print_github_output(f"Model file '{model_path}' not found in current directory: {os.getcwd()}", True)
+            print("Contents of current directory:")
+            for file in os.listdir():
+                print(f"  - {file}")
             return False
             
-        # Load the model
-        model = torch.load('best_model.pth', map_location=torch.device('cpu'))
+        # Load the model with weights_only=True for security
+        try:
+            model = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
+        except Exception as load_error:
+            print_github_output(f"Failed to load model: {str(load_error)}", True)
+            return False
+        
+        # Check if model is actually a neural network
+        if not isinstance(model, nn.Module):
+            print_github_output("Loaded file is not a PyTorch model", True)
+            return False
         
         # Check total parameters
         param_count = count_parameters(model)
@@ -64,7 +78,7 @@ def validate_model():
         return True
 
     except Exception as e:
-        print(f"::error::Error during model validation: {str(e)}")
+        print_github_output(f"Error during model validation: {str(e)}", True)
         return False
     finally:
         print("::endgroup::")
