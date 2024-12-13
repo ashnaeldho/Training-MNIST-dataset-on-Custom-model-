@@ -135,14 +135,11 @@ def validate_model():
 
         # Check total parameters
         param_count = count_parameters(model)
-        if param_count != 18314:  # Update to correct parameter count
-            print_github_output(f"Warning: Expected 18,314 parameters but found {param_count:,}", True)
-            
         if param_count > 20000:
             print_github_output(f"Model has {param_count:,} parameters (exceeds limit of 20,000)", True)
             return False
         else:
-            print_github_output(f"Model has exactly {param_count:,} parameters (under 20,000 limit)")
+            print_github_output(f"Model has {param_count:,} parameters (under 20,000 limit)")
 
         # Check batch normalization
         if not check_batch_norm(model):
