@@ -26,15 +26,26 @@ class TestModel(nn.Module):
         return x
 
 def count_parameters(model):
-    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # Count parameters per layer type
+    conv_params = sum(p.numel() for name, p in model.named_parameters() if 'conv' in name.lower())
+    bn_params = sum(p.numel() for name, p in model.named_parameters() if 'bn' in name.lower() or 'batch' in name.lower())
+    linear_params = sum(p.numel() for name, p in model.named_parameters() if 'linear' in name.lower() or 'classifier' in name.lower())
+    total_params = sum(p.numel() for p in model.parameters())
+    
+    print("::group::Parameter Count Details")
+    print(f"Convolutional layers: {conv_params:,} parameters")
+    print(f"Batch Normalization: {bn_params:,} parameters")
+    print(f"Linear layers: {linear_params:,} parameters")
+    print(f"Total parameters: {total_params:,}")
+    
     # Print detailed layer information
-    print("\nModel structure and parameters:")
+    print("\nPer-layer breakdown:")
     print("--------------------------------")
     for name, param in model.named_parameters():
-        if param.requires_grad:
-            print(f"{name}: {param.numel():,} parameters")
+        print(f"{name}: shape {list(param.shape)} = {param.numel():,} parameters")
     print("--------------------------------")
-    print(f"Total trainable parameters: {total_params:,}\n")
+    print("::endgroup::")
+    
     return total_params
 
 def check_batch_norm(model):
@@ -73,6 +84,12 @@ def validate_model():
             model = TestModel()
             state_dict = torch.load(model_path, map_location=torch.device('cpu'))
             model.load_state_dict(state_dict)
+            
+            # Print model architecture
+            print("::group::Model Architecture")
+            print(model)
+            print("::endgroup::")
+            
         except Exception as load_error:
             print_github_output(f"Failed to load model: {str(load_error)}", True)
             return False
@@ -80,10 +97,10 @@ def validate_model():
         # Check total parameters
         param_count = count_parameters(model)
         if param_count > 20000:
-            print_github_output(f"Model has {param_count:,} parameters, which exceeds the limit of 20,000", True)
+            print_github_output(f"❌ Model has {param_count:,} parameters (limit: 20,000)", True)
             return False
         else:
-            print_github_output(f"Model has {param_count:,} parameters")
+            print_github_output(f"✅ Model has {param_count:,} parameters (under 20,000 limit)")
 
         # Check batch normalization
         if not check_batch_norm(model):
