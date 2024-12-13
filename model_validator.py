@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import sys
+import os
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -26,6 +27,11 @@ def print_github_output(message, is_error=False):
 def validate_model():
     print("::group::Model Validation Results")
     try:
+        # Check if model file exists
+        if not os.path.exists('best_model.pth'):
+            print_github_output("Model file 'best_model.pth' not found", True)
+            return False
+            
         # Load the model
         model = torch.load('best_model.pth', map_location=torch.device('cpu'))
         
